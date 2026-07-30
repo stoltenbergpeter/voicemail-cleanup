@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Genesys Cloud Voicemail Manager</title>
+  <style>
+    :root {
+      --page: #f4f6f8;
+      --surface: #ffffff;
+      --surface-muted: #f8fafc;
+      --text: #182230;
+      --muted: #667085;
+      --border: #d9e0e8;
+      --primary: #1f5eff;
+      --primary-hover: #184bd0;
+      --success: #147d64;
+      --success-bg: #e8f7f2;
+      --warning: #9a6700;
+      --warning-bg: #fff7d6;
+      --danger: #b42318;
+      --danger-bg: #fff0ee;
+      --shadow: 0 8px 30px rgba(16, 24, 40, 0.08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    button, input, select { font: inherit; }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid rgba(31, 94, 255, 0.25);
+      outline-offset: 2px;
+    }
+
+    .topbar {
+      background: #17202b;
+      color: #fff;
+      padding: 18px 24px;
+      box-shadow: 0 2px 10px rgba(16, 24, 40, 0.15);
+    }
+
+    .topbar-inner {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: 0.01em;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: #c8d1dc;
+      font-size: 0.83rem;
+    }
+
+    .session-summary {
+      min-width: 0;
+      text-align: right;
+      font-size: 0.85rem;
+      color: #d9e1ea;
+    }
+
+    .session-summary strong {
+      display: block;
+      max-width: 360px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #fff;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 28px auto 50px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .setup-card {
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 26px;
+    }
+
+    .setup-card h2,
+    .mailbox-heading h2 {
+      margin: 0;
+      font-size: 1.28rem;
+    }
+
+    .setup-card > p {
+      margin: 8px 0 22px;
+      color: var(--muted);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 0.86rem;
+      font-weight: 650;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid #b9c4d0;
+      border-radius: 9px;
+    }
+
+    .field-help {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .btn {
+      min-height: 42px;
+      padding: 9px 15px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      cursor: pointer;
+      font-weight: 650;
+      transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:not(:disabled):hover { background: var(--primary-hover); }
+
+    .btn-secondary {
+      color: #263445;
+      background: #fff;
+      border-color: #b9c4d0;
+    }
+
+    .btn-secondary:not(:disabled):hover { background: #f2f5f8; }
+
+    .btn-danger {
+      color: var(--danger);
+      background: #fff;
+      border-color: #f1b5ae;
+    }
+
+    .btn-danger:not(:disabled):hover { background: var(--danger-bg); }
+
+    .btn-small {
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+
+    .hidden { display: none !important; }
+
+    .status-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      box-shadow: 0 4px 18px rgba(16, 24, 40, 0.05);
+    }
+
+    .status-banner.info { border-color: #b9cdfd; background: #eff4ff; }
+    .status-banner.success { border-color: #a7dfcf; background: var(--success-bg); }
+    .status-banner.warning { border-color: #efd58a; background: var(--warning-bg); }
+    .status-banner.error { border-color: #efb4ad; background: var(--danger-bg); }
+
+    .status-icon {
+      flex: 0 0 10px;
+      width: 10px;
+      height: 10px;
+      margin-top: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .status-banner.success .status-icon { background: var(--success); }
+    .status-banner.warning .status-icon { background: var(--warning); }
+    .status-banner.error .status-icon { background: var(--danger); }
+
+    .status-copy { min-width: 0; }
+    .status-copy strong { display: block; }
+    .status-copy span { display: block; margin-top: 2px; color: #4b5a6a; font-size: 0.84rem; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .metric-card {
+      padding: 18px 20px;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .metric-value {
+      display: block;
+      margin-top: 5px;
+      font-size: 1.85rem;
+      font-weight: 750;
+      line-height: 1.1;
+    }
+
+    .mailbox-card { overflow: hidden; }
+
+    .mailbox-toolbar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mailbox-heading p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 9px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 160px;
+      gap: 10px;
+      padding: 14px 20px;
+      background: var(--surface-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .progress-wrap {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #fbfcfe;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .progress-track {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e4e9ef;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: var(--primary);
+      transition: width 140ms ease;
+    }
+
+    .message-list { min-height: 180px; }
+
+    .message-row {
+      display: grid;
+      grid-template-columns: 112px minmax(170px, 0.85fr) minmax(180px, 1fr) 110px minmax(160px, 0.8fr) 116px;
+      align-items: start;
+      gap: 14px;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5eaf0;
+    }
+
+    .message-row:last-child { border-bottom: 0; }
+    .message-row.unread { background: #fbfdff; }
+
+    .column-label {
+      display: none;
+      margin-bottom: 3px;
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .message-primary {
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .message-secondary {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      overflow-wrap: anywhere;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 66px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 750;
+    }
+
+    .badge-unread { color: #174ea6; background: #e8f0fe; }
+    .badge-read { color: #476072; background: #edf1f4; }
+    .badge-deleted { color: var(--danger); background: var(--danger-bg); }
+
+    details {
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+
+    summary {
+      color: #31577c;
+      cursor: pointer;
+      font-weight: 650;
+    }
+
+    .detail-body {
+      margin-top: 8px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: #f2f5f8;
+      color: #344250;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .empty-state {
+      padding: 46px 22px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .loading-line {
+      width: 110px;
+      height: 9px;
+      margin: 18px auto 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #e2e7ec 25%, #f5f7f9 50%, #e2e7ec 75%);
+      background-size: 200% 100%;
+      animation: loading 1.15s infinite linear;
+    }
+
+    @keyframes loading {
+      from { background-position: 200% 0; }
+      to { background-position: -200% 0; }
+    }
+
+    .footer-note {
+      margin: 15px 3px 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 980px) {
+      .message-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .column-label { display: block; }
+    }
+
+    @media (max-width: 700px) {
+      .topbar-inner,
+      .mailbox-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .session-summary { text-align: left; }
+      .form-grid,
+      .summary-grid,
+      .filters,
+      .message-row {
+        grid-template-columns: 1fr;
+      }
+      .toolbar-actions { justify-content: flex-start; }
+      .message-row { gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>Genesys Cloud Voicemail Manager</h1>
+        <p>Signed-in user mailbox · PKCE OAuth</p>
+      </div>
+      <div id="sessionSummary" class="session-summary" aria-live="polite">
+        <strong>Not authenticated</strong>
+        <span id="sessionRegion">Region not configured</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="statusBanner" class="status-banner info hidden" role="status" aria-live="polite">
+      <span class="status-icon" aria-hidden="true"></span>
+      <div class="status-copy">
+        <strong id="statusTitle"></strong>
+        <span id="statusDetail"></span>
+      </div>
+    </section>
+
+    <section id="setupCard" class="card setup-card">
+      <h2>Connect to Genesys Cloud</h2>
+      <p>Enter the OAuth client settings once. This browser stores them in session storage and uses Authorization Code with PKCE; no client secret is used.</p>
+
+      <form id="setupForm" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="regionInput">Genesys Cloud region</label>
+            <input id="regionInput" name="region" list="regionOptions" autocomplete="off" required value="usw2.pure.cloud">
+            <datalist id="regionOptions">
+              <option value="usw2.pure.cloud">US West 2</option>
+              <option value="mypurecloud.com">US East 1</option>
+              <option value="mypurecloud.ie">Europe West 1</option>
+              <option value="mypurecloud.de">Europe Central 1</option>
+              <option value="mypurecloud.com.au">Australia</option>
+              <option value="mypurecloud.jp">Japan</option>
+              <option value="cac1.pure.cloud">Canada</option>
+              <option value="euw2.pure.cloud">Europe West 2</option>
+              <option value="aps1.pure.cloud">Asia Pacific South 1</option>
+              <option value="apne2.pure.cloud">Asia Pacific Northeast 2</option>
+            </datalist>
+            <div class="field-help">For your US West organization, use <code>usw2.pure.cloud</code>.</div>
+          </div>
+
+          <div class="field">
+            <label for="clientIdInput">OAuth client ID</label>
+            <input id="clientIdInput" name="clientId" autocomplete="off" required placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+            <div class="field-help">Use a Genesys Cloud OAuth client configured for Code Authorization.</div>
+          </div>
+
+          <div class="field full">
+            <label for="redirectUrlInput">Redirect URI</label>
+            <input id="redirectUrlInput" name="redirectUrl" type="url" autocomplete="off" required>
+            <div class="field-help">This must exactly match a redirect URI registered on the OAuth client.</div>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button id="connectButton" class="btn btn-primary" type="submit">Save and sign in</button>
+          <button id="clearButton" class="btn btn-secondary" type="button">Clear saved settings</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="appContent" class="hidden">
+      <div class="summary-grid" aria-label="Mailbox summary">
+        <article class="card metric-card">
+          <span class="metric-label">Total messages</span>
+          <span id="totalMetric" class="metric-value">0</span>
+        </article>
+        <article class="card metric-card">
+          <span class="metric-label">Unread</span>
+          <span id="unreadMetric" class="metric-value">0</span>
+        </article>
+        <article class="card metric-card">
+          <span class="metric-label">Read</span>
+          <span id="readMetric" class="metric-value">0</span>
+        </article>
+      </div>
+
+      <section class="card mailbox-card">
+        <div class="mailbox-toolbar">
+          <div class="mailbox-heading">
+            <h2>Voicemail messages</h2>
+            <p id="mailboxSubtitle">Messages available to the authenticated user.</p>
+          </div>
+          <div class="toolbar-actions">
+            <button id="refreshButton" class="btn btn-secondary" type="button">Refresh</button>
+            <button id="markAllButton" class="btn btn-primary" type="button" disabled>Mark all unread as read</button>
+            <button id="changeSettingsButton" class="btn btn-secondary" type="button">Connection settings</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <input id="searchInput" type="search" aria-label="Search voicemail messages" placeholder="Search caller, phone number, transcript, or message ID">
+          <select id="statusFilter" aria-label="Filter voicemail status">
+            <option value="all">All statuses</option>
+            <option value="unread">Unread only</option>
+            <option value="read">Read only</option>
+          </select>
+        </div>
+
+        <div id="progressWrap" class="progress-wrap hidden" aria-live="polite">
+          <div class="progress-label">
+            <span id="progressText">Updating messages…</span>
+            <span id="progressCount">0 / 0</span>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+        </div>
+
+        <div id="messageList" class="message-list" aria-live="polite">
+          <div class="empty-state">
+            <strong>Loading voicemail messages</strong>
+            <span>The mailbox will appear after authentication completes.</span>
+            <div class="loading-line" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+
+      <p class="footer-note">“Mark all” updates only unread, non-deleted messages returned by <code>GET /api/v2/voicemail/messages</code>, then refreshes the mailbox to verify the result.</p>
+    </section>
+  </main>
+
+  <script src="https://sdk-cdn.mypurecloud.com/javascript/257.0.0/purecloud-platform-client-v2.min.js"></script>
+  <script>
+    'use strict';
+
+    const CONFIG_KEYS = {
+      region: 'gc_region',
+      clientId: 'gc_clientId',
+      redirectUrl: 'gc_redirectUrl',
+      state: 'gc_voicemail_pkce_state'
+    };
+    const SDK_STORAGE_PREFIX = '_voicemail_manager_';
+    const PATCH_CONCURRENCY = 3;
+
+    const platformClient = require('platformClient');
+    const apiClient = platformClient.ApiClient.instance;
+
+    let usersApi = null;
+    let voicemailApi = null;
+    let currentUser = null;
+    let messages = [];
+    let isAuthenticated = false;
+    let isLoading = false;
+    let isUpdating = false;
+
+    const elements = {
+      statusBanner: document.getElementById('statusBanner'),
+      statusTitle: document.getElementById('statusTitle'),
+      statusDetail: document.getElementById('statusDetail'),
+      setupCard: document.getElementById('setupCard'),
+      setupForm: document.getElementById('setupForm'),
+      regionInput: document.getElementById('regionInput'),
+      clientIdInput: document.getElementById('clientIdInput'),
+      redirectUrlInput: document.getElementById('redirectUrlInput'),
+      connectButton: document.getElementById('connectButton'),
+      clearButton: document.getElementById('clearButton'),
+      appContent: document.getElementById('appContent'),
+      sessionSummary: document.getElementById('sessionSummary'),
+      sessionRegion: document.getElementById('sessionRegion'),
+      totalMetric: document.getElementById('totalMetric'),
+      unreadMetric: document.getElementById('unreadMetric'),
+      readMetric: document.getElementById('readMetric'),
+      mailboxSubtitle: document.getElementById('mailboxSubtitle'),
+      refreshButton: document.getElementById('refreshButton'),
+      markAllButton: document.getElementById('markAllButton'),
+      changeSettingsButton: document.getElementById('changeSettingsButton'),
+      searchInput: document.getElementById('searchInput'),
+      statusFilter: document.getElementById('statusFilter'),
+      progressWrap: document.getElementById('progressWrap'),
+      progressText: document.getElementById('progressText'),
+      progressCount: document.getElementById('progressCount'),
+      progressBar: document.getElementById('progressBar'),
+      messageList: document.getElementById('messageList')
+    };
+
+    function valueOf(object, ...keys) {
+      for (const key of keys) {
+        if (object && object[key] !== undefined && object[key] !== null) {
+          return object[key];
+        }
+      }
+      return undefined;
+    }
+
+    function getDefaultRedirectUrl() {
+      return `${window.location.origin}${window.location.pathname}`;
+    }
+
+    function normalizeConfig(config) {
+      return {
+        region: String(config.region || '').trim(),
+        clientId: String(config.clientId || '').trim(),
+        redirectUrl: String(config.redirectUrl || '').trim()
+      };
+    }
+
+    function readConfig() {
+      const query = new URLSearchParams(window.location.search);
+      const queryConfig = {
+        region: query.get(CONFIG_KEYS.region),
+        clientId: query.get(CONFIG_KEYS.clientId),
+        redirectUrl: query.get(CONFIG_KEYS.redirectUrl)
+      };
+
+      for (const [name, value] of Object.entries(queryConfig)) {
+        if (value) sessionStorage.setItem(CONFIG_KEYS[name], value);
+      }
+
+      return normalizeConfig({
+        region: queryConfig.region || sessionStorage.getItem(CONFIG_KEYS.region) || 'usw2.pure.cloud',
+        clientId: queryConfig.clientId || sessionStorage.getItem(CONFIG_KEYS.clientId) || '',
+        redirectUrl: queryConfig.redirectUrl || sessionStorage.getItem(CONFIG_KEYS.redirectUrl) || getDefaultRedirectUrl()
+      });
+    }
+
+    function saveConfig(config) {
+      const normalized = normalizeConfig(config);
+      sessionStorage.setItem(CONFIG_KEYS.region, normalized.region);
+      sessionStorage.setItem(CONFIG_KEYS.clientId, normalized.clientId);
+      sessionStorage.setItem(CONFIG_KEYS.redirectUrl, normalized.redirectUrl);
+      return normalized;
+    }
+
+    function populateConfigForm(config) {
+      elements.regionInput.value = config.region || 'usw2.pure.cloud';
+      elements.clientIdInput.value = config.clientId || '';
+      elements.redirectUrlInput.value = config.redirectUrl || getDefaultRedirectUrl();
+      elements.sessionRegion.textContent = config.region ? `Region: ${config.region}` : 'Region not configured';
+    }
+
+    function clearOauthQueryParameters() {
+      const url = new URL(window.location.href);
+      const removable = [
+        'code', 'state', 'error', 'error_description',
+        CONFIG_KEYS.region, CONFIG_KEYS.clientId, CONFIG_KEYS.redirectUrl
+      ];
+      removable.forEach((name) => url.searchParams.delete(name));
+      window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+    }
+
+    function makeState() {
+      const bytes = new Uint8Array(24);
+      window.crypto.getRandomValues(bytes);
+      return Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('');
+    }
+
+    function showStatus(type, title, detail = '') {
+      elements.statusBanner.className = `status-banner ${type}`;
+      elements.statusTitle.textContent = title;
+      elements.statusDetail.textContent = detail;
+      elements.statusBanner.classList.remove('hidden');
+    }
+
+    function hideStatus() {
+      elements.statusBanner.classList.add('hidden');
+    }
+
+    function formatApiError(error) {
+      if (!error) return 'Unknown error.';
+
+      const response = valueOf(error, 'response');
+      const status = valueOf(error, 'status', 'statusCode') || valueOf(response, 'status', 'statusCode');
+      const body = valueOf(error, 'body', 'responseBody') || valueOf(response, 'body', 'data');
+      let bodyMessage = '';
+
+      if (typeof body === 'string') {
+        try {
+          const parsed = JSON.parse(body);
+          bodyMessage = valueOf(parsed, 'message', 'error_description', 'error') || body;
+        } catch {
+          bodyMessage = body;
+        }
+      } else if (body && typeof body === 'object') {
+        bodyMessage = valueOf(body, 'message', 'error_description', 'error') || '';
+      }
+
+      const message = bodyMessage || valueOf(error, 'message', 'statusText') || String(error);
+      return status ? `HTTP ${status}: ${message}` : message;
+    }
+
+    function setControlState() {
+      const unreadCount = messages.filter(isUnreadAndActive).length;
+      elements.connectButton.disabled = isLoading || isUpdating;
+      elements.refreshButton.disabled = !isAuthenticated || isLoading || isUpdating;
+      elements.markAllButton.disabled = !isAuthenticated || isLoading || isUpdating || unreadCount === 0;
+      elements.changeSettingsButton.disabled = isLoading || isUpdating;
+      elements.searchInput.disabled = isLoading || isUpdating;
+      elements.statusFilter.disabled = isLoading || isUpdating;
+    }
+
+    function setLoading(loading) {
+      isLoading = loading;
+      setControlState();
+    }
+
+    function isUnreadAndActive(message) {
+      return valueOf(message, 'read') !== true && valueOf(message, 'deleted') !== true;
+    }
+
+    function getCallerDisplay(message) {
+      const callerUser = valueOf(message, 'callerUser', 'caller_user');
+      return valueOf(message, 'callerName', 'caller_name') || valueOf(callerUser, 'name') || 'Unknown caller';
+    }
+
+    function getOwnerDisplay(message) {
+      const user = valueOf(message, 'user');
+      const group = valueOf(message, 'group');
+      const queue = valueOf(message, 'queue');
+      if (user) return `User: ${valueOf(user, 'name') || valueOf(user, 'id') || 'Unknown'}`;
+      if (group) return `Group: ${valueOf(group, 'name') || valueOf(group, 'id') || 'Unknown'}`;
+      if (queue) return `Queue: ${valueOf(queue, 'name') || valueOf(queue, 'id') || 'Unknown'}`;
+      return 'Owner not provided';
+    }
+
+    function formatDate(value) {
+      if (!value) return 'Date unavailable';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleString([], {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit'
+      });
+    }
+
+    function formatDuration(seconds) {
+      const parsed = Number(seconds);
+      if (!Number.isFinite(parsed) || parsed < 0) return '—';
+      const whole = Math.round(parsed);
+      const minutes = Math.floor(whole / 60);
+      const remaining = whole % 60;
+      return `${minutes}:${String(remaining).padStart(2, '0')}`;
+    }
+
+    function appendText(parent, className, text) {
+      const node = document.createElement('div');
+      if (className) node.className = className;
+      node.textContent = text;
+      parent.appendChild(node);
+      return node;
+    }
+
+    function createCell(label, primary, secondary = '') {
+      const cell = document.createElement('div');
+      appendText(cell, 'column-label', label);
+      appendText(cell, 'message-primary', primary);
+      if (secondary) appendText(cell, 'message-secondary', secondary);
+      return cell;
+    }
+
+    function createDetails(summaryText, bodyText) {
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      const body = document.createElement('div');
+      summary.textContent = summaryText;
+      body.className = 'detail-body';
+      body.textContent = bodyText;
+      details.append(summary, body);
+      return details;
+    }
+
+    function createMessageRow(message) {
+      const id = String(valueOf(message, 'id') || '');
+      const isDeleted = valueOf(message, 'deleted') === true;
+      const isRead = valueOf(message, 'read') === true;
+      const row = document.createElement('article');
+      row.className = `message-row${!isRead && !isDeleted ? ' unread' : ''}`;
+      row.dataset.messageId = id;
+
+      const statusCell = document.createElement('div');
+      appendText(statusCell, 'column-label', 'Status');
+      const badge = document.createElement('span');
+      if (isDeleted) {
+        badge.className = 'badge badge-deleted';
+        badge.textContent = 'Deleted';
+      } else if (isRead) {
+        badge.className = 'badge badge-read';
+        badge.textContent = 'Read';
+      } else {
+        badge.className = 'badge badge-unread';
+        badge.textContent = 'Unread';
+      }
+      statusCell.appendChild(badge);
+      row.appendChild(statusCell);
+
+      const created = valueOf(message, 'createdDate', 'created_date');
+      row.appendChild(createCell('Received', formatDate(created), getOwnerDisplay(message)));
+
+      const callerCell = createCell(
+        'Caller',
+        getCallerDisplay(message),
+        valueOf(message, 'callerAddress', 'caller_address') || 'Address unavailable'
+      );
+      const transcript = valueOf(message, 'transcription');
+      if (transcript) callerCell.appendChild(createDetails('View transcription', String(transcript)));
+      row.appendChild(callerCell);
+
+      row.appendChild(createCell(
+        'Duration',
+        formatDuration(valueOf(message, 'audioRecordingDurationSeconds', 'audio_recording_duration_seconds')),
+        'minutes:seconds'
+      ));
+
+      const conversation = valueOf(message, 'conversation');
+      const conversationId = valueOf(conversation, 'id') || 'Not provided';
+      const identityCell = createCell('Identifiers', 'Message', id || 'ID unavailable');
+      identityCell.appendChild(createDetails('Conversation ID', String(conversationId)));
+      row.appendChild(identityCell);
+
+      const actionCell = document.createElement('div');
+      appendText(actionCell, 'column-label', 'Action');
+      const actionButton = document.createElement('button');
+      actionButton.type = 'button';
+      actionButton.className = 'btn btn-secondary btn-small';
+      actionButton.textContent = isRead ? 'Already read' : (isDeleted ? 'Unavailable' : 'Mark as read');
+      actionButton.disabled = isRead || isDeleted || isUpdating || !id;
+      actionButton.addEventListener('click', () => markSingleMessageRead(message, actionButton));
+      actionCell.appendChild(actionButton);
+      row.appendChild(actionCell);
+
+      return row;
+    }
+
+    function getFilteredMessages() {
+      const query = elements.searchInput.value.trim().toLowerCase();
+      const filter = elements.statusFilter.value;
+
+      return messages.filter((message) => {
+        const read = valueOf(message, 'read') === true;
+        const deleted = valueOf(message, 'deleted') === true;
+        if (filter === 'unread' && (read || deleted)) return false;
+        if (filter === 'read' && !read) return false;
+
+        if (!query) return true;
+        const callerUser = valueOf(message, 'callerUser', 'caller_user');
+        const conversation = valueOf(message, 'conversation');
+        const searchable = [
+          valueOf(message, 'id'),
+          valueOf(message, 'callerName', 'caller_name'),
+          valueOf(message, 'callerAddress', 'caller_address'),
+          valueOf(callerUser, 'name'),
+          valueOf(message, 'transcription'),
+          valueOf(conversation, 'id'),
+          getOwnerDisplay(message)
+        ].filter(Boolean).join(' ').toLowerCase();
+        return searchable.includes(query);
+      });
+    }
+
+    function updateMetrics() {
+      const activeMessages = messages.filter((message) => valueOf(message, 'deleted') !== true);
+      const unread = activeMessages.filter((message) => valueOf(message, 'read') !== true).length;
+      const read = activeMessages.filter((message) => valueOf(message, 'read') === true).length;
+      elements.totalMetric.textContent = String(activeMessages.length);
+      elements.unreadMetric.textContent = String(unread);
+      elements.readMetric.textContent = String(read);
+      elements.markAllButton.textContent = unread > 0
+        ? `Mark all ${unread} unread as read`
+        : 'All messages are read';
+      setControlState();
+    }
+
+    function renderMessages() {
+      updateMetrics();
+      const filtered = getFilteredMessages();
+      elements.messageList.replaceChildren();
+
+      if (filtered.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        const title = document.createElement('strong');
+        const copy = document.createElement('span');
+        title.textContent = messages.length === 0 ? 'No voicemail messages found' : 'No messages match this filter';
+        copy.textContent = messages.length === 0
+          ? 'The API returned an empty mailbox for this user.'
+          : 'Change the search text or status filter.';
+        empty.append(title, copy);
+        elements.messageList.appendChild(empty);
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      filtered.forEach((message) => fragment.appendChild(createMessageRow(message)));
+      elements.messageList.appendChild(fragment);
+    }
+
+    function renderLoadingMessages() {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'empty-state';
+      const title = document.createElement('strong');
+      const text = document.createElement('span');
+      const loader = document.createElement('div');
+      title.textContent = 'Loading voicemail messages';
+      text.textContent = 'Calling GET /api/v2/voicemail/messages.';
+      loader.className = 'loading-line';
+      loader.setAttribute('aria-hidden', 'true');
+      wrapper.append(title, text, loader);
+      elements.messageList.replaceChildren(wrapper);
+    }
+
+    function updateSessionSummary() {
+      const strong = elements.sessionSummary.querySelector('strong');
+      strong.textContent = currentUser ? currentUser.name || currentUser.email || currentUser.id : 'Authenticated user';
+      const config = readConfig();
+      elements.sessionRegion.textContent = `Region: ${config.region}`;
+      elements.mailboxSubtitle.textContent = currentUser
+        ? `Mailbox for ${currentUser.name || currentUser.email || currentUser.id}`
+        : 'Messages available to the authenticated user.';
+    }
+
+    async function loadVoicemails(options = {}) {
+      const { quiet = false } = options;
+      if (!voicemailApi) throw new Error('Voicemail API is not initialized.');
+
+      setLoading(true);
+      if (!quiet) {
+        renderLoadingMessages();
+        showStatus('info', 'Loading mailbox', 'Retrieving voicemail messages for the signed-in user.');
+      }
+
+      try {
+        const listing = await voicemailApi.getVoicemailMessages({
+          expand: ['transcription']
+        });
+        const received = valueOf(listing, 'entities');
+        messages = Array.isArray(received) ? received : [];
+        messages.sort((a, b) => {
+          const left = new Date(valueOf(a, 'createdDate', 'created_date') || 0).getTime();
+          const right = new Date(valueOf(b, 'createdDate', 'created_date') || 0).getTime();
+          return right - left;
+        });
+        renderMessages();
+        showStatus(
+          'success',
+          'Mailbox loaded',
+          `${messages.length} voicemail message${messages.length === 1 ? '' : 's'} returned by Genesys Cloud.`
+        );
+      } catch (error) {
+        messages = [];
+        renderMessages();
+        showStatus('error', 'Unable to load voicemail messages', formatApiError(error));
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function markSingleMessageRead(message, button) {
+      const messageId = valueOf(message, 'id');
+      if (!messageId || valueOf(message, 'read') === true || valueOf(message, 'deleted') === true) return;
+
+      button.disabled = true;
+      button.textContent = 'Updating…';
+      try {
+        const updated = await voicemailApi.patchVoicemailMessage(messageId, { read: true });
+        Object.assign(message, updated || {}, { read: true });
+        renderMessages();
+        showStatus('success', 'Voicemail marked as read', `Message ${messageId} was updated successfully.`);
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = 'Mark as read';
+        showStatus('error', 'Unable to update voicemail', formatApiError(error));
+      }
+    }
+
+    async function runWithConcurrency(items, limit, task) {
+      const results = new Array(items.length);
+      let nextIndex = 0;
+
+      async function worker() {
+        while (true) {
+          const index = nextIndex;
+          nextIndex += 1;
+          if (index >= items.length) return;
+          try {
+            results[index] = { status: 'fulfilled', value: await task(items[index], index) };
+          } catch (reason) {
+            results[index] = { status: 'rejected', reason };
+          }
+        }
+      }
+
+      const workers = Array.from(
+        { length: Math.min(Math.max(1, limit), items.length) },
+        () => worker()
+      );
+      await Promise.all(workers);
+      return results;
+    }
+
+    function showProgress(completed, total, failures) {
+      const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+      elements.progressWrap.classList.remove('hidden');
+      elements.progressText.textContent = failures > 0
+        ? `Updating messages · ${failures} failure${failures === 1 ? '' : 's'}`
+        : 'Updating unread messages';
+      elements.progressCount.textContent = `${completed} / ${total}`;
+      elements.progressBar.style.width = `${percent}%`;
+    }
+
+    function hideProgress() {
+      elements.progressWrap.classList.add('hidden');
+      elements.progressBar.style.width = '0%';
+      elements.progressCount.textContent = '0 / 0';
+    }
+
+    async function markAllUnreadAsRead() {
+      if (isUpdating || !voicemailApi) return;
+      const unread = messages.filter(isUnreadAndActive);
+      if (unread.length === 0) {
+        showStatus('success', 'Nothing to update', 'Every active voicemail message is already marked as read.');
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `Mark ${unread.length} unread voicemail message${unread.length === 1 ? '' : 's'} as read?\n\n` +
+        'This changes the state of each message in Genesys Cloud.'
+      );
+      if (!confirmed) return;
+
+      isUpdating = true;
+      setControlState();
+      renderMessages();
+      showProgress(0, unread.length, 0);
+      showStatus('info', 'Updating voicemail messages', 'Each unread message will be patched with {"read": true}.');
+
+      let completed = 0;
+      let failures = 0;
+
+      try {
+        const results = await runWithConcurrency(unread, PATCH_CONCURRENCY, async (message) => {
+          const messageId = valueOf(message, 'id');
+          if (!messageId) throw new Error('A voicemail message did not contain an ID.');
+
+          try {
+            const updated = await voicemailApi.patchVoicemailMessage(messageId, { read: true });
+            Object.assign(message, updated || {}, { read: true });
+            return updated;
+          } catch (error) {
+            failures += 1;
+            throw error;
+          } finally {
+            completed += 1;
+            showProgress(completed, unread.length, failures);
+          }
+        });
+
+        failures = results.filter((result) => result.status === 'rejected').length;
+        showProgress(completed, unread.length, failures);
+
+        await loadVoicemails({ quiet: true });
+
+        if (failures === 0) {
+          showStatus(
+            'success',
+            'All unread voicemails were marked as read',
+            `${unread.length} message${unread.length === 1 ? '' : 's'} updated and the mailbox was refreshed.`
+          );
+        } else {
+          const firstFailure = results.find((result) => result.status === 'rejected');
+          showStatus(
+            'warning',
+            'Some voicemail messages could not be updated',
+            `${unread.length - failures} succeeded and ${failures} failed. First error: ${formatApiError(firstFailure && firstFailure.reason)}`
+          );
+        }
+      } catch (error) {
+        showStatus('error', 'Bulk update did not complete', formatApiError(error));
+      } finally {
+        isUpdating = false;
+        hideProgress();
+        renderMessages();
+        setControlState();
+      }
+    }
+
+    async function authenticate(config) {
+      const normalized = saveConfig(config);
+      populateConfigForm(normalized);
+      setLoading(true);
+      showStatus('info', 'Authenticating with Genesys Cloud', 'Starting or completing the PKCE authorization flow.');
+
+      try {
+        apiClient.setEnvironment(normalized.region);
+        apiClient.setPersistSettings(true, SDK_STORAGE_PREFIX);
+
+        let expectedState = sessionStorage.getItem(CONFIG_KEYS.state);
+        if (!expectedState) {
+          expectedState = makeState();
+          sessionStorage.setItem(CONFIG_KEYS.state, expectedState);
+        }
+
+        const authData = await apiClient.loginPKCEGrant(
+          normalized.clientId,
+          normalized.redirectUrl,
+          { state: expectedState }
+        );
+
+        if (authData && authData.state && authData.state !== expectedState) {
+          throw new Error('OAuth state validation failed. Clear the saved settings and sign in again.');
+        }
+
+        sessionStorage.removeItem(CONFIG_KEYS.state);
+        clearOauthQueryParameters();
+
+        usersApi = new platformClient.UsersApi();
+        voicemailApi = new platformClient.VoicemailApi();
+        isAuthenticated = true;
+
+        currentUser = await usersApi.getUsersMe();
+        updateSessionSummary();
+        elements.setupCard.classList.add('hidden');
+        elements.appContent.classList.remove('hidden');
+
+        await loadVoicemails();
+      } catch (error) {
+        isAuthenticated = false;
+        elements.setupCard.classList.remove('hidden');
+        elements.appContent.classList.add('hidden');
+        showStatus('error', 'Genesys Cloud authentication failed', formatApiError(error));
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function validateConfig(config) {
+      if (!config.region) return 'Genesys Cloud region is required.';
+      if (!config.clientId) return 'OAuth client ID is required.';
+      if (!config.redirectUrl) return 'Redirect URI is required.';
+      try {
+        const redirect = new URL(config.redirectUrl);
+        if (!['http:', 'https:'].includes(redirect.protocol)) {
+          return 'Redirect URI must use HTTP or HTTPS.';
+        }
+      } catch {
+        return 'Redirect URI is not a valid URL.';
+      }
+      return '';
+    }
+
+    function clearSavedSettings() {
+      Object.values(CONFIG_KEYS).forEach((key) => sessionStorage.removeItem(key));
+      try {
+        apiClient.setPersistSettings(false, SDK_STORAGE_PREFIX);
+      } catch {
+        // The app's own session values are still cleared if the SDK cannot clear persistence.
+      }
+      currentUser = null;
+      messages = [];
+      isAuthenticated = false;
+      populateConfigForm({
+        region: 'usw2.pure.cloud',
+        clientId: '',
+        redirectUrl: getDefaultRedirectUrl()
+      });
+      elements.setupCard.classList.remove('hidden');
+      elements.appContent.classList.add('hidden');
+      elements.sessionSummary.querySelector('strong').textContent = 'Not authenticated';
+      showStatus('info', 'Saved settings cleared', 'Enter the OAuth client settings to sign in again.');
+    }
+
+    elements.setupForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const config = normalizeConfig({
+        region: elements.regionInput.value,
+        clientId: elements.clientIdInput.value,
+        redirectUrl: elements.redirectUrlInput.value
+      });
+      const validationError = validateConfig(config);
+      if (validationError) {
+        showStatus('error', 'Check the connection settings', validationError);
+        return;
+      }
+      try {
+        await authenticate(config);
+      } catch {
+        // authenticate() already rendered a useful error.
+      }
+    });
+
+    elements.clearButton.addEventListener('click', clearSavedSettings);
+    elements.refreshButton.addEventListener('click', async () => {
+      try {
+        await loadVoicemails();
+      } catch {
+        // loadVoicemails() already rendered a useful error.
+      }
+    });
+    elements.markAllButton.addEventListener('click', markAllUnreadAsRead);
+    elements.changeSettingsButton.addEventListener('click', () => {
+      elements.setupCard.classList.remove('hidden');
+      elements.setupCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    elements.searchInput.addEventListener('input', renderMessages);
+    elements.statusFilter.addEventListener('change', renderMessages);
+
+    async function start() {
+      const config = readConfig();
+      populateConfigForm(config);
+
+      const oauthCallback = new URLSearchParams(window.location.search).has('code');
+      if (config.clientId && (oauthCallback || sessionStorage.getItem(CONFIG_KEYS.clientId))) {
+        try {
+          await authenticate(config);
+          return;
+        } catch {
+          // The setup card remains visible after a failed automatic attempt.
+        }
+      }
+
+      hideStatus();
+      elements.setupCard.classList.remove('hidden');
+      elements.appContent.classList.add('hidden');
+      setControlState();
+    }
+
+    start();
+  </script>
+</body>
+</html>
