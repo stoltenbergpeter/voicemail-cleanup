@@ -1150,22 +1150,47 @@
         apiClient.setEnvironment(normalized.region);
         apiClient.setPersistSettings(true, SDK_STORAGE_PREFIX);
 
+        // Capture and validate the callback state before loginPKCEGrant() processes
+        // the URL. The Genesys Cloud SDK removes the OAuth query parameters while
+        // handling the callback, and authData.state can retain an earlier SDK value
+        // when the client instance or a persisted token is reused.
+        const callbackParams = new URLSearchParams(window.location.search);
+        const isOauthCallback = callbackParams.has('code') || callbackParams.has('error');
+        const returnedState = callbackParams.get('state');
+
         let expectedState = sessionStorage.getItem(CONFIG_KEYS.state);
-        if (!expectedState) {
+
+        if (isOauthCallback) {
+          if (!expectedState) {
+            clearOauthQueryParameters();
+            throw new Error(
+              'OAuth callback received, but the original state value is no longer available. ' +
+              'Start a new sign-in from this browser tab.'
+            );
+          }
+
+          if (!returnedState || returnedState !== expectedState) {
+            sessionStorage.removeItem(CONFIG_KEYS.state);
+            clearOauthQueryParameters();
+            throw new Error(
+              'OAuth state validation failed before the authorization code was processed. ' +
+              'Start a new sign-in from this browser tab.'
+            );
+          }
+        } else if (!expectedState) {
           expectedState = makeState();
           sessionStorage.setItem(CONFIG_KEYS.state, expectedState);
         }
 
-        const authData = await apiClient.loginPKCEGrant(
+        await apiClient.loginPKCEGrant(
           normalized.clientId,
           normalized.redirectUrl,
           { state: expectedState }
         );
 
-        if (authData && authData.state && authData.state !== expectedState) {
-          throw new Error('OAuth state validation failed. Clear the saved settings and sign in again.');
-        }
-
+        // State was validated directly from the OAuth callback above. Do not compare
+        // against authData.state after the SDK call because it is SDK-managed state
+        // and can contain a value retained from an earlier successful token check.
         sessionStorage.removeItem(CONFIG_KEYS.state);
         clearOauthQueryParameters();
 
@@ -1207,11 +1232,19 @@
 
     function clearSavedSettings() {
       Object.values(CONFIG_KEYS).forEach((key) => sessionStorage.removeItem(key));
+      sessionStorage.removeItem('genesys_cloud_sdk_pkce_code_verifier');
+
       try {
+        // clearAccessToken() only writes the cleared state when persistence is enabled.
+        apiClient.setPersistSettings(true, SDK_STORAGE_PREFIX);
+        apiClient.clearAccessToken();
+        localStorage.removeItem(`${SDK_STORAGE_PREFIX.replace(/\W+/g, '_')}_auth_data`);
         apiClient.setPersistSettings(false, SDK_STORAGE_PREFIX);
       } catch {
-        // The app's own session values are still cleared if the SDK cannot clear persistence.
+        // The app's session values are still cleared when browser storage is unavailable.
       }
+
+      clearOauthQueryParameters();
       currentUser = null;
       messages = [];
       isAuthenticated = false;
@@ -1223,7 +1256,7 @@
       elements.setupCard.classList.remove('hidden');
       elements.appContent.classList.add('hidden');
       elements.sessionSummary.querySelector('strong').textContent = 'Not authenticated';
-      showStatus('info', 'Saved settings cleared', 'Enter the OAuth client settings to sign in again.');
+      showStatus('info', 'Saved settings cleared', 'The saved token and PKCE values were removed. Enter the OAuth client settings to sign in again.');
     }
 
     elements.setupForm.addEventListener('submit', async (event) => {
