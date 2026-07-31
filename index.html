@@ -523,6 +523,112 @@
       gap: 9px;
     }
 
+    .cleanup-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px 28px;
+      align-items: center;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--border);
+      background: #f7f9fc;
+    }
+
+    .cleanup-copy .eyebrow { margin-bottom: 5px; }
+
+    .cleanup-copy h3 {
+      margin: 0;
+      color: var(--ft-blue-dark);
+      font-size: 1.08rem;
+      font-weight: 700;
+    }
+
+    .cleanup-copy p:last-child {
+      max-width: 700px;
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .cleanup-controls {
+      display: grid;
+      grid-template-columns: auto 118px auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .cleanup-controls label {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .age-input {
+      display: grid;
+      grid-template-columns: minmax(64px, 1fr) auto;
+      align-items: center;
+      overflow: hidden;
+      min-width: 118px;
+      border: 1px solid #aeb4b7;
+      border-radius: var(--radius-sm);
+      background: #ffffff;
+    }
+
+    .age-input:focus-within {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .age-input input {
+      min-height: 42px;
+      padding: 8px 4px 8px 10px;
+      border: 0;
+      border-radius: 0;
+      text-align: right;
+    }
+
+    .age-input input:focus-visible { outline: 0; }
+
+    .age-input span {
+      padding: 0 11px 0 7px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .cleanup-preview {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 15px 16px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--ft-teal);
+      border-radius: var(--radius-sm);
+      background: #ffffff;
+    }
+
+    .cleanup-preview.has-matches { border-left-color: var(--ft-maroon); }
+
+    .cleanup-preview strong {
+      display: block;
+      color: var(--ft-gray);
+    }
+
+    .cleanup-preview span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .cleanup-preview-actions {
+      display: flex;
+      flex: 0 0 auto;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 9px;
+    }
+
     .filters {
       display: grid;
       grid-template-columns: minmax(260px, 1fr) 190px;
@@ -560,6 +666,8 @@
       background: var(--ft-blue);
       transition: width 140ms ease;
     }
+
+    .progress-bar.danger { background: var(--ft-maroon); }
 
     .message-header,
     .message-row {
@@ -717,6 +825,7 @@
     dialog::backdrop { background: rgba(0, 31, 98, 0.55); }
 
     .dialog-accent { height: 6px; background: var(--ft-blue); }
+    .dialog-accent.danger { background: var(--ft-maroon); }
 
     .dialog-body { padding: 26px 28px 10px; }
 
@@ -728,6 +837,15 @@
 
     .dialog-body p { margin: 12px 0 0; color: var(--muted); }
 
+    .dialog-warning {
+      padding: 11px 12px;
+      border-left: 4px solid var(--ft-maroon);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      background: #fcf5f7;
+      color: var(--ft-gray) !important;
+      font-weight: 650;
+    }
+
     .dialog-actions {
       display: flex;
       flex-wrap: wrap;
@@ -737,6 +855,8 @@
     }
 
     @media (max-width: 1080px) {
+      .cleanup-panel { grid-template-columns: 1fr; }
+      .cleanup-preview { grid-column: 1; }
       .message-header { display: none; }
       .message-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .column-label { display: block; }
@@ -758,6 +878,7 @@
       .summary-grid { grid-template-columns: 1fr; }
       .mailbox-toolbar { align-items: flex-start; flex-direction: column; }
       .toolbar-actions { justify-content: flex-start; }
+      .cleanup-controls { justify-content: start; }
     }
 
     @media (max-width: 620px) {
@@ -774,13 +895,18 @@
       .session-summary strong { white-space: normal; }
       .form-grid,
       .filters,
+      .cleanup-controls,
       .message-row { grid-template-columns: 1fr; }
       .message-row { gap: 13px; }
+      .cleanup-preview,
       .button-row,
       .toolbar-actions,
       .dialog-actions { align-items: stretch; flex-direction: column; }
+      .cleanup-preview-actions { align-items: stretch; flex-direction: column; }
       .button-row .btn,
       .toolbar-actions .btn,
+      .cleanup-preview-actions .btn,
+      .cleanup-controls .btn,
       .dialog-actions .btn { width: 100%; }
     }
 
@@ -820,7 +946,7 @@
     <div class="page-heading">
       <p class="eyebrow">Genesys Cloud</p>
       <h1>Voicemail Center</h1>
-      <p>Review voicemail messages assigned to your Genesys Cloud account and mark unread messages as read.</p>
+      <p>Review voicemail messages, mark unread messages as read, and safely clean up older voicemail after previewing the exact matches.</p>
     </div>
 
     <section id="statusBanner" class="status-banner info hidden" role="status" aria-live="polite">
@@ -848,7 +974,7 @@
           </div>
           <div class="signin-point">
             <span class="checkmark" aria-hidden="true">✓</span>
-            <span>Updates only messages you choose to mark as read.</span>
+            <span>Changes only messages you explicitly mark as read or approve for deletion after preview.</span>
           </div>
         </div>
       </div>
@@ -914,12 +1040,41 @@
           </div>
         </div>
 
+        <section class="cleanup-panel" aria-labelledby="cleanupHeading">
+          <div class="cleanup-copy">
+            <p class="eyebrow">Mailbox Cleanup</p>
+            <h3 id="cleanupHeading">Delete Older Voicemail Messages</h3>
+            <p>Choose an age threshold, preview every active message that qualifies, and then decide whether to delete the reviewed set.</p>
+          </div>
+
+          <div class="cleanup-controls">
+            <label for="ageDaysInput">Older than</label>
+            <div class="age-input">
+              <input id="ageDaysInput" type="number" min="1" max="3650" step="1" value="30" inputmode="numeric" aria-label="Voicemail age in days">
+              <span aria-hidden="true">days</span>
+            </div>
+            <button id="previewCleanupButton" class="btn btn-secondary" type="button">Preview older messages</button>
+          </div>
+
+          <div id="cleanupPreview" class="cleanup-preview hidden" role="status" aria-live="polite">
+            <div>
+              <strong id="cleanupPreviewTitle">No cleanup preview is active</strong>
+              <span id="cleanupPreviewDetail">Nothing has been deleted.</span>
+            </div>
+            <div class="cleanup-preview-actions">
+              <button id="clearCleanupButton" class="btn btn-neutral btn-small" type="button">Show all messages</button>
+              <button id="deleteAgedButton" class="btn btn-danger btn-small" type="button" disabled>Delete matched messages</button>
+            </div>
+          </div>
+        </section>
+
         <div class="filters">
           <input id="searchInput" type="search" aria-label="Search voicemail messages" placeholder="Search caller, phone number, transcript, or message ID">
           <select id="statusFilter" aria-label="Filter voicemail status">
             <option value="all">All statuses</option>
             <option value="unread">Unread only</option>
             <option value="read">Read only</option>
+            <option value="deleted">Deleted only</option>
           </select>
         </div>
 
@@ -951,20 +1106,21 @@
         </div>
       </section>
 
-      <p class="footer-note">The bulk action updates only unread, non-deleted messages returned across every page of <code>GET /api/v2/voicemail/me/messages</code>, and then refreshes the complete mailbox to verify the result.</p>
+      <p class="footer-note">Both bulk actions use the complete, paginated result from <code>GET /api/v2/voicemail/me/messages</code>. Read updates target unread, active messages; cleanup deletion targets only the exact age-based preview set and then reloads the mailbox to verify the result.</p>
     </section>
   </main>
 
-  <dialog id="confirmDialog" aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogDescription">
-    <div class="dialog-accent" aria-hidden="true"></div>
+  <dialog id="confirmDialog" aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogDescription confirmDialogWarning">
+    <div id="confirmDialogAccent" class="dialog-accent" aria-hidden="true"></div>
     <div class="dialog-body">
-      <p class="eyebrow">Confirm Update</p>
-      <h2 id="confirmDialogTitle">Mark All Unread Messages as Read?</h2>
-      <p id="confirmDialogDescription">This will update <strong id="confirmMessageCount">0</strong> voicemail messages in Genesys Cloud.</p>
+      <p id="confirmDialogEyebrow" class="eyebrow">Confirm Action</p>
+      <h2 id="confirmDialogTitle">Confirm This Action</h2>
+      <p id="confirmDialogDescription">Review the action before continuing.</p>
+      <p id="confirmDialogWarning" class="dialog-warning hidden"></p>
     </div>
     <div class="dialog-actions">
       <button id="cancelConfirmButton" class="btn btn-neutral" type="button">Cancel</button>
-      <button id="approveConfirmButton" class="btn btn-primary" type="button">Mark all as read</button>
+      <button id="approveConfirmButton" class="btn btn-primary" type="button">Continue</button>
     </div>
   </dialog>
   <script src="https://sdk-cdn.mypurecloud.com/javascript/257.0.0/purecloud-platform-client-v2.min.js"></script>
@@ -1035,9 +1191,14 @@
     };
     const SDK_STORAGE_PREFIX = '_voicemail_manager_';
     const PATCH_CONCURRENCY = 3;
+    const DELETE_CONCURRENCY = 3;
     const VOICEMAIL_PAGE_SIZE = 100;
     const VOICEMAIL_EXPAND_BATCH_SIZE = 25;
     const MAX_VOICEMAIL_PAGES = 1000;
+    const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+    const DEFAULT_CLEANUP_DAYS = 30;
+    const MIN_CLEANUP_DAYS = 1;
+    const MAX_CLEANUP_DAYS = 3650;
 
     const platformClient = require('platformClient');
     const apiClient = platformClient.ApiClient.instance;
@@ -1050,6 +1211,7 @@
     let isLoading = false;
     let isUpdating = false;
     let confirmationResolver = null;
+    let cleanupPreview = createEmptyCleanupPreview();
 
     const elements = {
       statusBanner: document.getElementById('statusBanner'),
@@ -1070,6 +1232,13 @@
       refreshButton: document.getElementById('refreshButton'),
       markAllButton: document.getElementById('markAllButton'),
       changeSettingsButton: document.getElementById('changeSettingsButton'),
+      ageDaysInput: document.getElementById('ageDaysInput'),
+      previewCleanupButton: document.getElementById('previewCleanupButton'),
+      cleanupPreview: document.getElementById('cleanupPreview'),
+      cleanupPreviewTitle: document.getElementById('cleanupPreviewTitle'),
+      cleanupPreviewDetail: document.getElementById('cleanupPreviewDetail'),
+      clearCleanupButton: document.getElementById('clearCleanupButton'),
+      deleteAgedButton: document.getElementById('deleteAgedButton'),
       searchInput: document.getElementById('searchInput'),
       statusFilter: document.getElementById('statusFilter'),
       progressWrap: document.getElementById('progressWrap'),
@@ -1078,11 +1247,26 @@
       progressBar: document.getElementById('progressBar'),
       messageList: document.getElementById('messageList'),
       confirmDialog: document.getElementById('confirmDialog'),
+      confirmDialogAccent: document.getElementById('confirmDialogAccent'),
+      confirmDialogEyebrow: document.getElementById('confirmDialogEyebrow'),
       confirmDialogTitle: document.getElementById('confirmDialogTitle'),
-      confirmMessageCount: document.getElementById('confirmMessageCount'),
+      confirmDialogDescription: document.getElementById('confirmDialogDescription'),
+      confirmDialogWarning: document.getElementById('confirmDialogWarning'),
       cancelConfirmButton: document.getElementById('cancelConfirmButton'),
       approveConfirmButton: document.getElementById('approveConfirmButton')
     };
+
+    function createEmptyCleanupPreview() {
+      return {
+        active: false,
+        days: null,
+        cutoffMs: null,
+        generatedAtMs: null,
+        messageIds: new Set(),
+        invalidDateCount: 0,
+        missingIdCount: 0
+      };
+    }
 
     function valueOf(object, ...keys) {
       for (const key of keys) {
@@ -1194,10 +1378,15 @@
 
     function setControlState() {
       const unreadCount = messages.filter(isUnreadAndActive).length;
+      const cleanupCount = getCleanupPreviewMessages().length;
       elements.connectButton.disabled = isLoading || isUpdating;
       elements.refreshButton.disabled = !isAuthenticated || isLoading || isUpdating;
       elements.markAllButton.disabled = !isAuthenticated || isLoading || isUpdating || unreadCount === 0;
       elements.changeSettingsButton.disabled = isLoading || isUpdating;
+      elements.ageDaysInput.disabled = !isAuthenticated || isLoading || isUpdating;
+      elements.previewCleanupButton.disabled = !isAuthenticated || isLoading || isUpdating;
+      elements.clearCleanupButton.disabled = !cleanupPreview.active || isLoading || isUpdating;
+      elements.deleteAgedButton.disabled = !isAuthenticated || isLoading || isUpdating || !cleanupPreview.active || cleanupCount === 0;
       elements.searchInput.disabled = isLoading || isUpdating;
       elements.statusFilter.disabled = isLoading || isUpdating;
     }
@@ -1209,6 +1398,47 @@
 
     function isUnreadAndActive(message) {
       return valueOf(message, 'read') !== true && valueOf(message, 'deleted') !== true;
+    }
+
+    function isActiveMessage(message) {
+      return valueOf(message, 'deleted') !== true;
+    }
+
+    function getMessageCreatedTimestamp(message) {
+      const created = valueOf(message, 'createdDate', 'created_date');
+      if (!created) return null;
+      const timestamp = new Date(created).getTime();
+      return Number.isFinite(timestamp) ? timestamp : null;
+    }
+
+    function parseCleanupDays() {
+      const days = Number(elements.ageDaysInput.value);
+      if (!Number.isInteger(days) || days < MIN_CLEANUP_DAYS || days > MAX_CLEANUP_DAYS) {
+        throw new Error(`Enter a whole number from ${MIN_CLEANUP_DAYS} through ${MAX_CLEANUP_DAYS} days.`);
+      }
+      return days;
+    }
+
+    function getCleanupPreviewMessages() {
+      if (!cleanupPreview.active || cleanupPreview.messageIds.size === 0) return [];
+      return messages.filter((message) => {
+        const messageId = valueOf(message, 'id');
+        return messageId && cleanupPreview.messageIds.has(String(messageId)) && isActiveMessage(message);
+      });
+    }
+
+    function reconcileCleanupPreview() {
+      if (!cleanupPreview.active) return;
+      const activeIds = new Set(
+        messages
+          .filter(isActiveMessage)
+          .map((message) => valueOf(message, 'id'))
+          .filter(Boolean)
+          .map(String)
+      );
+      cleanupPreview.messageIds = new Set(
+        [...cleanupPreview.messageIds].filter((messageId) => activeIds.has(messageId))
+      );
     }
 
     function getCallerDisplay(message) {
@@ -1243,6 +1473,14 @@
       const minutes = Math.floor(whole / 60);
       const remaining = whole % 60;
       return `${minutes}:${String(remaining).padStart(2, '0')}`;
+    }
+
+    function formatMessageAge(value) {
+      if (!value) return 'Age unavailable';
+      const timestamp = new Date(value).getTime();
+      if (!Number.isFinite(timestamp)) return 'Age unavailable';
+      const days = Math.max(0, Math.floor((Date.now() - timestamp) / MILLISECONDS_PER_DAY));
+      return `${days} day${days === 1 ? '' : 's'} old`;
     }
 
     function appendText(parent, className, text) {
@@ -1297,7 +1535,11 @@
       row.appendChild(statusCell);
 
       const created = valueOf(message, 'createdDate', 'created_date');
-      row.appendChild(createCell('Received', formatDate(created), getOwnerDisplay(message)));
+      row.appendChild(createCell(
+        'Received',
+        formatDate(created),
+        `${formatMessageAge(created)} · ${getOwnerDisplay(message)}`
+      ));
 
       const callerCell = createCell(
         'Caller',
@@ -1337,12 +1579,16 @@
     function getFilteredMessages() {
       const query = elements.searchInput.value.trim().toLowerCase();
       const filter = elements.statusFilter.value;
+      const sourceMessages = cleanupPreview.active
+        ? getCleanupPreviewMessages()
+        : messages;
 
-      return messages.filter((message) => {
+      return sourceMessages.filter((message) => {
         const read = valueOf(message, 'read') === true;
         const deleted = valueOf(message, 'deleted') === true;
         if (filter === 'unread' && (read || deleted)) return false;
-        if (filter === 'read' && !read) return false;
+        if (filter === 'read' && (!read || deleted)) return false;
+        if (filter === 'deleted' && !deleted) return false;
 
         if (!query) return true;
         const callerUser = valueOf(message, 'callerUser', 'caller_user');
@@ -1361,7 +1607,7 @@
     }
 
     function updateMetrics() {
-      const activeMessages = messages.filter((message) => valueOf(message, 'deleted') !== true);
+      const activeMessages = messages.filter(isActiveMessage);
       const unread = activeMessages.filter((message) => valueOf(message, 'read') !== true).length;
       const read = activeMessages.filter((message) => valueOf(message, 'read') === true).length;
       elements.totalMetric.textContent = String(activeMessages.length);
@@ -1373,8 +1619,138 @@
       setControlState();
     }
 
+    function updateMailboxSubtitle() {
+      if (cleanupPreview.active) {
+        const count = getCleanupPreviewMessages().length;
+        elements.mailboxSubtitle.textContent =
+          `Cleanup preview: ${count} active message${count === 1 ? '' : 's'} older than ${cleanupPreview.days} days. ` +
+          'Search and status filters can further narrow the visible rows.';
+        return;
+      }
+
+      elements.mailboxSubtitle.textContent = currentUser
+        ? `Mailbox for ${currentUser.name || currentUser.email || currentUser.id}`
+        : 'Messages available to the authenticated user.';
+    }
+
+    function updateCleanupPreviewDisplay() {
+      if (!cleanupPreview.active) {
+        elements.cleanupPreview.classList.add('hidden');
+        elements.cleanupPreview.classList.remove('has-matches');
+        elements.deleteAgedButton.textContent = 'Delete matched messages';
+        updateMailboxSubtitle();
+        setControlState();
+        return;
+      }
+
+      const matched = getCleanupPreviewMessages();
+      const unreadCount = matched.filter((message) => valueOf(message, 'read') !== true).length;
+      const count = matched.length;
+      const exclusionDetails = [];
+      if (cleanupPreview.invalidDateCount > 0) {
+        exclusionDetails.push(`${cleanupPreview.invalidDateCount} active message${cleanupPreview.invalidDateCount === 1 ? '' : 's'} had no valid created date`);
+      }
+      if (cleanupPreview.missingIdCount > 0) {
+        exclusionDetails.push(`${cleanupPreview.missingIdCount} older message${cleanupPreview.missingIdCount === 1 ? '' : 's'} had no message ID`);
+      }
+
+      elements.cleanupPreview.classList.remove('hidden');
+      elements.cleanupPreview.classList.toggle('has-matches', count > 0);
+      elements.cleanupPreviewTitle.textContent = count > 0
+        ? `${count} voicemail message${count === 1 ? '' : 's'} match the cleanup threshold`
+        : 'No voicemail messages match the cleanup threshold';
+
+      let detail = `Showing active messages received before ${formatDate(new Date(cleanupPreview.cutoffMs).toISOString())}. `;
+      detail += `${unreadCount} ${unreadCount === 1 ? 'is' : 'are'} currently unread. Nothing has been deleted.`;
+      if (exclusionDetails.length > 0) detail += ` Excluded: ${exclusionDetails.join('; ')}.`;
+      elements.cleanupPreviewDetail.textContent = detail;
+      elements.deleteAgedButton.textContent = count > 0
+        ? `Delete ${count} matched message${count === 1 ? '' : 's'}`
+        : 'No messages to delete';
+      updateMailboxSubtitle();
+      setControlState();
+    }
+
+    function clearCleanupPreview({ render = true } = {}) {
+      cleanupPreview = createEmptyCleanupPreview();
+      elements.cleanupPreview.classList.add('hidden');
+      elements.cleanupPreview.classList.remove('has-matches');
+      elements.deleteAgedButton.textContent = 'Delete matched messages';
+      if (render) renderMessages();
+      else {
+        updateMailboxSubtitle();
+        setControlState();
+      }
+    }
+
+    function previewAgedVoicemails() {
+      if (!isAuthenticated || isLoading || isUpdating) return;
+
+      let days;
+      try {
+        days = parseCleanupDays();
+      } catch (error) {
+        clearCleanupPreview({ render: false });
+        showStatus('error', 'Enter a valid cleanup threshold', error.message);
+        elements.ageDaysInput.focus();
+        return;
+      }
+
+      const generatedAtMs = Date.now();
+      const cutoffMs = generatedAtMs - (days * MILLISECONDS_PER_DAY);
+      const messageIds = new Set();
+      let invalidDateCount = 0;
+      let missingIdCount = 0;
+
+      messages.filter(isActiveMessage).forEach((message) => {
+        const createdTimestamp = getMessageCreatedTimestamp(message);
+        if (createdTimestamp === null) {
+          invalidDateCount += 1;
+          return;
+        }
+        if (createdTimestamp >= cutoffMs) return;
+
+        const messageId = valueOf(message, 'id');
+        if (!messageId) {
+          missingIdCount += 1;
+          return;
+        }
+        messageIds.add(String(messageId));
+      });
+
+      cleanupPreview = {
+        active: true,
+        days,
+        cutoffMs,
+        generatedAtMs,
+        messageIds,
+        invalidDateCount,
+        missingIdCount
+      };
+
+      elements.searchInput.value = '';
+      elements.statusFilter.value = 'all';
+      renderMessages();
+
+      const count = getCleanupPreviewMessages().length;
+      if (count > 0) {
+        showStatus(
+          'warning',
+          'Cleanup preview ready',
+          `${count} active voicemail message${count === 1 ? '' : 's'} older than ${days} days are shown below. Review them before deleting.`
+        );
+      } else {
+        showStatus(
+          'success',
+          'No older voicemail messages found',
+          `No active voicemail messages are more than ${days} days old.`
+        );
+      }
+    }
+
     function renderMessages() {
       updateMetrics();
+      updateCleanupPreviewDisplay();
       const filtered = getFilteredMessages();
       elements.messageList.replaceChildren();
 
@@ -1383,10 +1759,21 @@
         empty.className = 'empty-state';
         const title = document.createElement('strong');
         const copy = document.createElement('span');
-        title.textContent = messages.length === 0 ? 'No voicemail messages found' : 'No messages match this filter';
-        copy.textContent = messages.length === 0
-          ? 'The API returned an empty mailbox for this user.'
-          : 'Change the search text or status filter.';
+
+        if (cleanupPreview.active) {
+          const previewCount = getCleanupPreviewMessages().length;
+          title.textContent = previewCount === 0
+            ? 'No voicemail messages match this age threshold'
+            : 'No preview messages match these filters';
+          copy.textContent = previewCount === 0
+            ? 'Change the number of days and preview again, or return to the complete mailbox.'
+            : 'Clear the search text or change the status filter to see the complete cleanup preview.';
+        } else {
+          title.textContent = messages.length === 0 ? 'No voicemail messages found' : 'No messages match this filter';
+          copy.textContent = messages.length === 0
+            ? 'The API returned an empty mailbox for this user.'
+            : 'Change the search text or status filter.';
+        }
         empty.append(title, copy);
         elements.messageList.appendChild(empty);
         return;
@@ -1416,9 +1803,7 @@
       strong.textContent = currentUser ? currentUser.name || currentUser.email || currentUser.id : 'Authenticated user';
       const config = readConfig();
       elements.sessionRegion.textContent = `${getRegionLabel(config.region)} · ${getRegionHost(config.region)}`;
-      elements.mailboxSubtitle.textContent = currentUser
-        ? `Mailbox for ${currentUser.name || currentUser.email || currentUser.id}`
-        : 'Messages available to the authenticated user.';
+      updateMailboxSubtitle();
     }
 
     function toPositiveInteger(value) {
@@ -1579,6 +1964,7 @@
       const { quiet = false } = options;
       if (!voicemailApi) throw new Error('Voicemail API is not initialized.');
 
+      const previousMessages = messages;
       setLoading(true);
       if (!quiet) {
         renderLoadingMessages();
@@ -1594,6 +1980,7 @@
           const right = new Date(valueOf(b, 'createdDate', 'created_date') || 0).getTime();
           return right - left;
         });
+        reconcileCleanupPreview();
         renderMessages();
 
         const pageText = `${pagedListing.pagesLoaded} page${pagedListing.pagesLoaded === 1 ? '' : 's'}`;
@@ -1614,9 +2001,9 @@
           );
         }
       } catch (error) {
-        messages = [];
+        messages = quiet ? previousMessages : [];
         renderMessages();
-        showStatus('error', 'Unable to load voicemail messages', formatApiError(error));
+        if (!quiet) showStatus('error', 'Unable to load voicemail messages', formatApiError(error));
         throw error;
       } finally {
         setLoading(false);
@@ -1666,19 +2053,21 @@
       return results;
     }
 
-    function showProgress(completed, total, failures) {
+    function showProgress(completed, total, failures, label = 'Updating messages', tone = 'default') {
       const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
       elements.progressWrap.classList.remove('hidden');
       elements.progressText.textContent = failures > 0
-        ? `Updating messages · ${failures} failure${failures === 1 ? '' : 's'}`
-        : 'Updating unread messages';
+        ? `${label} · ${failures} failure${failures === 1 ? '' : 's'}`
+        : label;
       elements.progressCount.textContent = `${completed} / ${total}`;
       elements.progressBar.style.width = `${percent}%`;
+      elements.progressBar.classList.toggle('danger', tone === 'danger');
     }
 
     function hideProgress() {
       elements.progressWrap.classList.add('hidden');
       elements.progressBar.style.width = '0%';
+      elements.progressBar.classList.remove('danger');
       elements.progressCount.textContent = '0 / 0';
     }
 
@@ -1690,25 +2079,48 @@
       resolver(approved);
     }
 
-    function confirmBulkUpdate(messageCount) {
+    function requestConfirmation({
+      eyebrow = 'Confirm Action',
+      title,
+      description,
+      warning = '',
+      approveLabel,
+      destructive = false,
+      fallbackMessage
+    }) {
       if (!elements.confirmDialog || typeof elements.confirmDialog.showModal !== 'function') {
-        return Promise.resolve(window.confirm(
-          `Mark ${messageCount} unread voicemail message${messageCount === 1 ? '' : 's'} as read?`
-        ));
+        return Promise.resolve(window.confirm(fallbackMessage || `${title}
+
+${description}`));
       }
 
       if (confirmationResolver) resolveBulkConfirmation(false);
-      elements.confirmMessageCount.textContent = String(messageCount);
-      elements.confirmDialogTitle.textContent = messageCount === 1
-        ? 'Mark This Unread Message as Read?'
-        : 'Mark All Unread Messages as Read?';
-      elements.approveConfirmButton.textContent = messageCount === 1
-        ? 'Mark as read'
-        : `Mark all ${messageCount} as read`;
+      elements.confirmDialogEyebrow.textContent = eyebrow;
+      elements.confirmDialogTitle.textContent = title;
+      elements.confirmDialogDescription.textContent = description;
+      elements.confirmDialogWarning.textContent = warning;
+      elements.confirmDialogWarning.classList.toggle('hidden', !warning);
+      elements.confirmDialogAccent.classList.toggle('danger', destructive);
+      elements.approveConfirmButton.className = `btn ${destructive ? 'btn-danger' : 'btn-primary'}`;
+      elements.approveConfirmButton.textContent = approveLabel;
       elements.confirmDialog.showModal();
 
       return new Promise((resolve) => {
         confirmationResolver = resolve;
+      });
+    }
+
+    function confirmBulkRead(messageCount) {
+      return requestConfirmation({
+        eyebrow: 'Confirm Update',
+        title: messageCount === 1
+          ? 'Mark This Unread Message as Read?'
+          : 'Mark All Unread Messages as Read?',
+        description: `This will mark ${messageCount} unread voicemail message${messageCount === 1 ? '' : 's'} as read in Genesys Cloud.`,
+        approveLabel: messageCount === 1
+          ? 'Mark as read'
+          : `Mark all ${messageCount} as read`,
+        fallbackMessage: `Mark ${messageCount} unread voicemail message${messageCount === 1 ? '' : 's'} as read?`
       });
     }
 
@@ -1720,13 +2132,13 @@
         return;
       }
 
-      const confirmed = await confirmBulkUpdate(unread.length);
+      const confirmed = await confirmBulkRead(unread.length);
       if (!confirmed) return;
 
       isUpdating = true;
       setControlState();
       renderMessages();
-      showProgress(0, unread.length, 0);
+      showProgress(0, unread.length, 0, 'Marking unread messages as read');
       showStatus('info', 'Updating voicemail messages', 'Each unread message will be patched with {"read": true}.');
 
       let completed = 0;
@@ -1746,12 +2158,12 @@
             throw error;
           } finally {
             completed += 1;
-            showProgress(completed, unread.length, failures);
+            showProgress(completed, unread.length, failures, 'Marking unread messages as read');
           }
         });
 
         failures = results.filter((result) => result.status === 'rejected').length;
-        showProgress(completed, unread.length, failures);
+        showProgress(completed, unread.length, failures, 'Marking unread messages as read');
 
         await loadVoicemails({ quiet: true });
 
@@ -1771,6 +2183,127 @@
         }
       } catch (error) {
         showStatus('error', 'Bulk update did not complete', formatApiError(error));
+      } finally {
+        isUpdating = false;
+        hideProgress();
+        renderMessages();
+        setControlState();
+      }
+    }
+
+    async function bulkDeleteAgedVoicemails() {
+      if (isUpdating || !voicemailApi || !cleanupPreview.active) return;
+
+      const matched = getCleanupPreviewMessages();
+      if (matched.length === 0) {
+        showStatus('success', 'Nothing to delete', 'The current cleanup preview contains no active voicemail messages.');
+        return;
+      }
+
+      const days = cleanupPreview.days;
+      const cutoffText = formatDate(new Date(cleanupPreview.cutoffMs).toISOString());
+      const unreadCount = matched.filter((message) => valueOf(message, 'read') !== true).length;
+      const confirmed = await requestConfirmation({
+        eyebrow: 'Confirm Deletion',
+        title: `Delete ${matched.length} Older Voicemail Message${matched.length === 1 ? '' : 's'}?`,
+        description:
+          `This will delete the exact ${matched.length}-message preview received before ${cutoffText} ` +
+          `and older than ${days} days.`,
+        warning:
+          `${unreadCount} ${unreadCount === 1 ? 'message is' : 'messages are'} unread. ` +
+          'This application does not provide an undo action.',
+        approveLabel: `Delete ${matched.length} message${matched.length === 1 ? '' : 's'}`,
+        destructive: true,
+        fallbackMessage:
+          `Delete ${matched.length} voicemail message${matched.length === 1 ? '' : 's'} older than ${days} days? ` +
+          `${unreadCount} ${unreadCount === 1 ? 'is' : 'are'} unread. This application does not provide an undo action.`
+      });
+      if (!confirmed) return;
+
+      isUpdating = true;
+      setControlState();
+      renderMessages();
+      showProgress(0, matched.length, 0, 'Deleting older voicemail messages', 'danger');
+      showStatus(
+        'warning',
+        'Deleting older voicemail messages',
+        `Sending one delete request for each of the ${matched.length} reviewed messages.`
+      );
+
+      let completed = 0;
+      let failures = 0;
+      let results = [];
+
+      try {
+        results = await runWithConcurrency(matched, DELETE_CONCURRENCY, async (message) => {
+          const messageId = valueOf(message, 'id');
+          if (!messageId) throw new Error('A voicemail message did not contain an ID.');
+
+          try {
+            await voicemailApi.deleteVoicemailMessage(messageId);
+            Object.assign(message, {
+              deleted: true,
+              deletedDate: new Date().toISOString()
+            });
+          } catch (error) {
+            failures += 1;
+            throw error;
+          } finally {
+            completed += 1;
+            showProgress(
+              completed,
+              matched.length,
+              failures,
+              'Deleting older voicemail messages',
+              'danger'
+            );
+          }
+        });
+
+        failures = results.filter((result) => result.status === 'rejected').length;
+        const succeeded = matched.length - failures;
+        showProgress(
+          completed,
+          matched.length,
+          failures,
+          'Deleting older voicemail messages',
+          'danger'
+        );
+
+        clearCleanupPreview({ render: false });
+
+        let refreshError = null;
+        try {
+          await loadVoicemails({ quiet: true });
+        } catch (error) {
+          refreshError = error;
+          renderMessages();
+        }
+
+        if (failures === 0 && !refreshError) {
+          showStatus(
+            'success',
+            'Older voicemail messages were deleted',
+            `${succeeded} message${succeeded === 1 ? '' : 's'} deleted and the complete mailbox was refreshed.`
+          );
+        } else {
+          const firstFailure = results.find((result) => result.status === 'rejected');
+          const details = [
+            `${succeeded} deletion${succeeded === 1 ? '' : 's'} succeeded`,
+            `${failures} failed`
+          ];
+          if (firstFailure) details.push(`First delete error: ${formatApiError(firstFailure.reason)}`);
+          if (refreshError) details.push(`Mailbox refresh error: ${formatApiError(refreshError)}`);
+          showStatus(
+            'warning',
+            failures > 0
+              ? 'Some voicemail messages could not be deleted'
+              : 'Messages were deleted, but mailbox refresh failed',
+            details.join('. ') + '.'
+          );
+        }
+      } catch (error) {
+        showStatus('error', 'Bulk deletion did not complete', formatApiError(error));
       } finally {
         isUpdating = false;
         hideProgress();
@@ -1879,6 +2412,9 @@
       clearOauthQueryParameters();
       currentUser = null;
       messages = [];
+      cleanupPreview = createEmptyCleanupPreview();
+      elements.ageDaysInput.value = String(DEFAULT_CLEANUP_DAYS);
+      elements.cleanupPreview.classList.add('hidden');
       isAuthenticated = false;
       populateConfigForm({
         region: APP_CONFIG.defaultRegion
@@ -1908,6 +2444,7 @@
 
     elements.clearButton.addEventListener('click', clearSavedSettings);
     elements.refreshButton.addEventListener('click', async () => {
+      clearCleanupPreview({ render: false });
       try {
         await loadVoicemails();
       } catch {
@@ -1915,6 +2452,17 @@
       }
     });
     elements.markAllButton.addEventListener('click', markAllUnreadAsRead);
+    elements.previewCleanupButton.addEventListener('click', previewAgedVoicemails);
+    elements.clearCleanupButton.addEventListener('click', () => {
+      clearCleanupPreview();
+      showStatus('info', 'Cleanup preview closed', 'The complete mailbox is shown again.');
+    });
+    elements.deleteAgedButton.addEventListener('click', bulkDeleteAgedVoicemails);
+    elements.ageDaysInput.addEventListener('input', () => {
+      if (!cleanupPreview.active) return;
+      clearCleanupPreview();
+      showStatus('info', 'Cleanup preview cleared', 'Preview again after changing the age threshold.');
+    });
     elements.cancelConfirmButton.addEventListener('click', () => resolveBulkConfirmation(false));
     elements.approveConfirmButton.addEventListener('click', () => resolveBulkConfirmation(true));
     elements.confirmDialog.addEventListener('cancel', (event) => {
@@ -1934,6 +2482,7 @@
     async function start() {
       const config = readConfig();
       populateConfigForm(config);
+      elements.ageDaysInput.value = String(DEFAULT_CLEANUP_DAYS);
 
       const oauthParams = new URLSearchParams(window.location.search);
       const oauthCallback = oauthParams.has('code') || oauthParams.has('error');
