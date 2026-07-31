@@ -378,34 +378,6 @@
       font-size: 0.8rem;
     }
 
-    .connection-summary {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin: 0 0 24px;
-      padding: 14px;
-      border: 1px solid #c7d5ed;
-      border-radius: var(--radius-md);
-      background: #f6f8fd;
-    }
-
-    .connection-item span {
-      display: block;
-      color: var(--muted);
-      font-size: 0.73rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .connection-item strong {
-      display: block;
-      margin-top: 3px;
-      color: var(--ft-blue-dark);
-      font-size: 0.9rem;
-      overflow-wrap: anywhere;
-    }
-
     .button-row {
       display: flex;
       flex-wrap: wrap;
@@ -801,7 +773,6 @@
       .session-summary { min-width: 0; max-width: 100%; text-align: left; }
       .session-summary strong { white-space: normal; }
       .form-grid,
-      .connection-summary,
       .filters,
       .message-row { grid-template-columns: 1fr; }
       .message-row { gap: 13px; }
@@ -884,19 +855,6 @@
 
       <div class="setup-card">
         <h2>Sign In</h2>
-        <p>The OAuth application is preconfigured. Confirm the Genesys Cloud region and redirect URI before continuing.</p>
-
-        <div class="connection-summary" aria-label="OAuth application configuration">
-          <div class="connection-item">
-            <span>OAuth application</span>
-            <strong>Franklin Templeton Voicemail Center</strong>
-          </div>
-          <div class="connection-item">
-            <span>Authentication</span>
-            <strong>Authorization Code + PKCE</strong>
-          </div>
-        </div>
-
         <form id="setupForm" novalidate>
           <div class="form-grid">
             <div class="field full">
@@ -914,12 +872,6 @@
                 <option value="ap_northeast_2">Asia Pacific Northeast 2 (apne2.pure.cloud)</option>
               </select>
               <div class="field-help">The default is US East, which uses the <code>mypurecloud.com</code> environment.</div>
-            </div>
-
-            <div class="field full">
-              <label for="redirectUrlInput">Redirect URI</label>
-              <input id="redirectUrlInput" name="redirectUrl" type="url" autocomplete="off" required>
-              <div class="field-help">This must exactly match an authorized redirect URI on OAuth client <code>409225b8-66a3-407c-92ad-fa386bad3e79</code>.</div>
             </div>
           </div>
 
@@ -1021,6 +973,7 @@
 
     const APP_CONFIG = Object.freeze({
       clientId: '409225b8-66a3-407c-92ad-fa386bad3e79',
+      redirectUrl: 'https://stoltenbergpeter.github.io/voicemail-cleanup/',
       defaultRegion: 'us_east'
     });
 
@@ -1077,7 +1030,6 @@
 
     const CONFIG_KEYS = {
       region: 'gc_region',
-      redirectUrl: 'gc_redirectUrl',
       state: 'gc_voicemail_pkce_state',
       signInStarted: 'gc_voicemail_sign_in_started'
     };
@@ -1103,7 +1055,6 @@
       setupCard: document.getElementById('setupCard'),
       setupForm: document.getElementById('setupForm'),
       regionInput: document.getElementById('regionInput'),
-      redirectUrlInput: document.getElementById('redirectUrlInput'),
       connectButton: document.getElementById('connectButton'),
       clearButton: document.getElementById('clearButton'),
       appContent: document.getElementById('appContent'),
@@ -1139,10 +1090,6 @@
       return undefined;
     }
 
-    function getDefaultRedirectUrl() {
-      return `${window.location.origin}${window.location.pathname}`;
-    }
-
     function normalizeRegion(region) {
       const value = String(region || '').trim().toLowerCase();
       return REGION_ALIASES[value] || (REGION_HOSTS[value] ? value : APP_CONFIG.defaultRegion);
@@ -1162,31 +1109,26 @@
       return {
         region: normalizeRegion(config.region),
         clientId: APP_CONFIG.clientId,
-        redirectUrl: String(config.redirectUrl || '').trim()
+        redirectUrl: APP_CONFIG.redirectUrl
       };
     }
 
     function readConfig() {
       const query = new URLSearchParams(window.location.search);
-      const queryConfig = {
-        region: query.get(CONFIG_KEYS.region),
-        redirectUrl: query.get(CONFIG_KEYS.redirectUrl)
-      };
+      const queryRegion = query.get(CONFIG_KEYS.region);
 
-      for (const [name, value] of Object.entries(queryConfig)) {
-        if (value) sessionStorage.setItem(CONFIG_KEYS[name], value);
+      if (queryRegion) {
+        sessionStorage.setItem(CONFIG_KEYS.region, queryRegion);
       }
 
       return normalizeConfig({
-        region: queryConfig.region || sessionStorage.getItem(CONFIG_KEYS.region) || APP_CONFIG.defaultRegion,
-        redirectUrl: queryConfig.redirectUrl || sessionStorage.getItem(CONFIG_KEYS.redirectUrl) || getDefaultRedirectUrl()
+        region: queryRegion || sessionStorage.getItem(CONFIG_KEYS.region) || APP_CONFIG.defaultRegion
       });
     }
 
     function saveConfig(config) {
       const normalized = normalizeConfig(config);
       sessionStorage.setItem(CONFIG_KEYS.region, normalized.region);
-      sessionStorage.setItem(CONFIG_KEYS.redirectUrl, normalized.redirectUrl);
       sessionStorage.setItem(CONFIG_KEYS.signInStarted, 'true');
       return normalized;
     }
@@ -1194,7 +1136,6 @@
     function populateConfigForm(config) {
       const normalized = normalizeConfig(config);
       elements.regionInput.value = normalized.region;
-      elements.redirectUrlInput.value = normalized.redirectUrl || getDefaultRedirectUrl();
       elements.sessionRegion.textContent = `${getRegionLabel(normalized.region)} · ${getRegionHost(normalized.region)}`;
     }
 
@@ -1202,7 +1143,7 @@
       const url = new URL(window.location.href);
       const removable = [
         'code', 'state', 'error', 'error_description',
-        CONFIG_KEYS.region, CONFIG_KEYS.redirectUrl, 'gc_clientId'
+        CONFIG_KEYS.region, 'gc_redirectUrl', 'gc_clientId'
       ];
       removable.forEach((name) => url.searchParams.delete(name));
       window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
@@ -1749,15 +1690,6 @@
       if (!config.region || !REGION_HOSTS[normalizeRegion(config.region)]) {
         return 'Select a supported Genesys Cloud region.';
       }
-      if (!config.redirectUrl) return 'Redirect URI is required.';
-      try {
-        const redirect = new URL(config.redirectUrl);
-        if (!['http:', 'https:'].includes(redirect.protocol)) {
-          return 'Redirect URI must use HTTP or HTTPS.';
-        }
-      } catch {
-        return 'Redirect URI is not a valid URL.';
-      }
       return '';
     }
 
@@ -1781,8 +1713,7 @@
       messages = [];
       isAuthenticated = false;
       populateConfigForm({
-        region: APP_CONFIG.defaultRegion,
-        redirectUrl: getDefaultRedirectUrl()
+        region: APP_CONFIG.defaultRegion
       });
       elements.setupCard.classList.remove('hidden');
       elements.appContent.classList.add('hidden');
@@ -1793,8 +1724,7 @@
     elements.setupForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const config = normalizeConfig({
-        region: elements.regionInput.value,
-        redirectUrl: elements.redirectUrlInput.value
+        region: elements.regionInput.value
       });
       const validationError = validateConfig(config);
       if (validationError) {
