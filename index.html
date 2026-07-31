@@ -951,7 +951,7 @@
         </div>
       </section>
 
-      <p class="footer-note">The bulk action updates only unread, non-deleted messages returned by <code>GET /api/v2/voicemail/messages</code>, and then refreshes the mailbox to verify the result.</p>
+      <p class="footer-note">The bulk action updates only unread, non-deleted messages returned across every page of <code>GET /api/v2/voicemail/me/messages</code>, and then refreshes the complete mailbox to verify the result.</p>
     </section>
   </main>
 
@@ -1035,6 +1035,9 @@
     };
     const SDK_STORAGE_PREFIX = '_voicemail_manager_';
     const PATCH_CONCURRENCY = 3;
+    const VOICEMAIL_PAGE_SIZE = 100;
+    const VOICEMAIL_EXPAND_BATCH_SIZE = 25;
+    const MAX_VOICEMAIL_PAGES = 1000;
 
     const platformClient = require('platformClient');
     const apiClient = platformClient.ApiClient.instance;
@@ -1401,7 +1404,7 @@
       const text = document.createElement('span');
       const loader = document.createElement('div');
       title.textContent = 'Loading voicemail messages';
-      text.textContent = 'Calling GET /api/v2/voicemail/messages.';
+      text.textContent = 'Retrieving every available mailbox page from Genesys Cloud.';
       loader.className = 'loading-line';
       loader.setAttribute('aria-hidden', 'true');
       wrapper.append(title, text, loader);
@@ -1418,6 +1421,160 @@
         : 'Messages available to the authenticated user.';
     }
 
+    function toPositiveInteger(value) {
+      const parsed = Number(value);
+      return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+    }
+
+    function toNonNegativeInteger(value) {
+      const parsed = Number(value);
+      return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+    }
+
+    function chunkValues(values, chunkSize) {
+      const chunks = [];
+      for (let index = 0; index < values.length; index += chunkSize) {
+        chunks.push(values.slice(index, index + chunkSize));
+      }
+      return chunks;
+    }
+
+    async function getAllVoicemailPages({ quiet = false } = {}) {
+      const messagesById = new Map();
+      const messagesWithoutId = [];
+      let requestedPageNumber = 1;
+      let pagesLoaded = 0;
+      let reportedPageCount = null;
+      let reportedTotal = null;
+
+      while (requestedPageNumber <= MAX_VOICEMAIL_PAGES) {
+        const listing = await voicemailApi.getVoicemailMeMessages({
+          pageSize: VOICEMAIL_PAGE_SIZE,
+          pageNumber: requestedPageNumber
+        });
+
+        pagesLoaded += 1;
+        const received = valueOf(listing, 'entities');
+        const pageMessages = Array.isArray(received) ? received : [];
+        let newMessagesOnPage = 0;
+
+        pageMessages.forEach((message) => {
+          const messageId = valueOf(message, 'id');
+          if (messageId) {
+            const existing = messagesById.get(messageId);
+            messagesById.set(messageId, existing ? Object.assign({}, existing, message) : message);
+            if (!existing) newMessagesOnPage += 1;
+          } else {
+            messagesWithoutId.push(message);
+            newMessagesOnPage += 1;
+          }
+        });
+
+        const responsePageNumber = toPositiveInteger(valueOf(listing, 'pageNumber', 'page_number')) || requestedPageNumber;
+        const responsePageSize = toPositiveInteger(valueOf(listing, 'pageSize', 'page_size')) || VOICEMAIL_PAGE_SIZE;
+        const pageCount = toPositiveInteger(valueOf(listing, 'pageCount', 'page_count'));
+        const total = toNonNegativeInteger(valueOf(listing, 'total'));
+        const nextUri = valueOf(listing, 'nextUri', 'next_uri');
+
+        if (pageCount !== null) reportedPageCount = pageCount;
+        if (total !== null && (total > 0 || pageMessages.length === 0)) reportedTotal = total;
+
+        const loadedCount = messagesById.size + messagesWithoutId.length;
+        if (!quiet) {
+          const pageLabel = reportedPageCount
+            ? `page ${responsePageNumber} of ${reportedPageCount}`
+            : `page ${responsePageNumber}`;
+          const countLabel = reportedTotal !== null
+            ? `${loadedCount} of ${reportedTotal} messages`
+            : `${loadedCount} message${loadedCount === 1 ? '' : 's'}`;
+          showStatus('info', 'Loading mailbox', `Loaded ${pageLabel} · ${countLabel}.`);
+        }
+
+        const reachedPageCount = reportedPageCount !== null && responsePageNumber >= reportedPageCount;
+        const reachedTotal = reportedTotal !== null && loadedCount >= reportedTotal;
+        const emptyPage = pageMessages.length === 0;
+        const shortPage = pageMessages.length < responsePageSize;
+        const hasExplicitNextPage = Boolean(nextUri);
+
+        if (reachedPageCount || reachedTotal || emptyPage) break;
+
+        if (reportedPageCount === null && !hasExplicitNextPage && shortPage) break;
+
+        // If the API ignores pageNumber or returns a repeated page, fail clearly
+        // instead of silently treating a partial mailbox as complete.
+        if (responsePageNumber < requestedPageNumber || newMessagesOnPage === 0) {
+          throw new Error(
+            `Genesys Cloud pagination did not advance while requesting voicemail page ${requestedPageNumber}. ` +
+            'The mailbox was not treated as completely loaded.'
+          );
+        }
+
+        requestedPageNumber = responsePageNumber + 1;
+      }
+
+      if (requestedPageNumber > MAX_VOICEMAIL_PAGES) {
+        throw new Error(
+          `Voicemail pagination exceeded the safety limit of ${MAX_VOICEMAIL_PAGES} pages.`
+        );
+      }
+
+      return {
+        entities: [...messagesById.values(), ...messagesWithoutId],
+        pagesLoaded,
+        pageCount: reportedPageCount,
+        total: reportedTotal
+      };
+    }
+
+    async function expandVoicemailDetails(baseMessages, { quiet = false } = {}) {
+      const ids = baseMessages
+        .map((message) => valueOf(message, 'id'))
+        .filter(Boolean);
+
+      if (ids.length === 0) {
+        return { entities: baseMessages, failedBatches: 0 };
+      }
+
+      const batches = chunkValues(ids, VOICEMAIL_EXPAND_BATCH_SIZE);
+      const expandedById = new Map();
+      let failedBatches = 0;
+
+      for (let index = 0; index < batches.length; index += 1) {
+        const batch = batches[index];
+        if (!quiet && batches.length > 1) {
+          showStatus(
+            'info',
+            'Loading voicemail details',
+            `Expanding transcription details for batch ${index + 1} of ${batches.length}.`
+          );
+        }
+
+        try {
+          const listing = await voicemailApi.getVoicemailMessages({
+            ids: batch.join(','),
+            expand: ['transcription']
+          });
+          const received = valueOf(listing, 'entities');
+          const expandedMessages = Array.isArray(received) ? received : [];
+          expandedMessages.forEach((message) => {
+            const messageId = valueOf(message, 'id');
+            if (messageId) expandedById.set(messageId, message);
+          });
+        } catch (error) {
+          failedBatches += 1;
+          console.warn('Unable to expand a voicemail detail batch.', error);
+        }
+      }
+
+      const merged = baseMessages.map((message) => {
+        const messageId = valueOf(message, 'id');
+        const expanded = messageId ? expandedById.get(messageId) : null;
+        return expanded ? Object.assign({}, message, expanded) : message;
+      });
+
+      return { entities: merged, failedBatches };
+    }
+
     async function loadVoicemails(options = {}) {
       const { quiet = false } = options;
       if (!voicemailApi) throw new Error('Voicemail API is not initialized.');
@@ -1425,26 +1582,37 @@
       setLoading(true);
       if (!quiet) {
         renderLoadingMessages();
-        showStatus('info', 'Loading mailbox', 'Retrieving voicemail messages for the signed-in user.');
+        showStatus('info', 'Loading mailbox', 'Retrieving all voicemail pages for the signed-in user.');
       }
 
       try {
-        const listing = await voicemailApi.getVoicemailMessages({
-          expand: ['transcription']
-        });
-        const received = valueOf(listing, 'entities');
-        messages = Array.isArray(received) ? received : [];
+        const pagedListing = await getAllVoicemailPages({ quiet });
+        const expandedListing = await expandVoicemailDetails(pagedListing.entities, { quiet });
+        messages = expandedListing.entities;
         messages.sort((a, b) => {
           const left = new Date(valueOf(a, 'createdDate', 'created_date') || 0).getTime();
           const right = new Date(valueOf(b, 'createdDate', 'created_date') || 0).getTime();
           return right - left;
         });
         renderMessages();
-        showStatus(
-          'success',
-          'Mailbox loaded',
-          `${messages.length} voicemail message${messages.length === 1 ? '' : 's'} returned by Genesys Cloud.`
-        );
+
+        const pageText = `${pagedListing.pagesLoaded} page${pagedListing.pagesLoaded === 1 ? '' : 's'}`;
+        const totalText = `${messages.length} voicemail message${messages.length === 1 ? '' : 's'}`;
+
+        if (expandedListing.failedBatches > 0) {
+          showStatus(
+            'warning',
+            'Mailbox loaded with limited details',
+            `${totalText} loaded across ${pageText}. ` +
+            `${expandedListing.failedBatches} transcription detail batch${expandedListing.failedBatches === 1 ? '' : 'es'} could not be expanded.`
+          );
+        } else {
+          showStatus(
+            'success',
+            'Mailbox loaded',
+            `${totalText} loaded across ${pageText}.`
+          );
+        }
       } catch (error) {
         messages = [];
         renderMessages();
